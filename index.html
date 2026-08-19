@@ -163,7 +163,7 @@
 <body>
 <header>
   <h1>My <span class="tt">TikTok</span> Account Manager</h1>
-  <p>Sign in, post a video, and track your stats — powered by the official TikTok API</p>
+  <p>Sign in and publish a video — powered by the official TikTok API</p>
 </header>
 <main>
   <!-- AUTH CARD -->
@@ -214,7 +214,7 @@
 const API = 'http://localhost:8321';
 const CLIENT_KEY = 'sbawyce2w7me2v43xc';
 const REDIRECT_URI = 'https://ninafontes321.github.io/callback.html';
-const SCOPES = 'user.info.basic video.publish video.list';
+const SCOPES = 'user.info.basic video.publish';
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -252,12 +252,10 @@ async function loadMe() {
       $('loginView').classList.add('hidden');
       $('meView').classList.remove('hidden');
       $('postCard').classList.remove('hidden');
-      $('videosCard').classList.remove('hidden');
       $('meName').textContent = 'Logged in as ' + (me.username || me.display_name || 'TikTok user');
       $('meOid').textContent = 'open_id: ' + (me.open_id || '');
       if (me.avatar_url) $('meAvatar').src = me.avatar_url;
       if (me.api_error) setStatus($('postStatus'), 'Warning: ' + me.api_error, 'warn');
-      loadVideos();
     } else {
       loggedIn = false;
       $('loginView').classList.remove('hidden');
