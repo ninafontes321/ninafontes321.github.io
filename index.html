@@ -1,31 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My TikTok Account Manager</title>
-  <style>
-    body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-           max-width: 640px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; line-height: 1.6; }
-    h1 { font-size: 1.6rem; }
-    a { color: #0b8f88; }
-    .card { border: 1px solid #e2e2e2; border-radius: 10px; padding: 20px 24px; margin-top: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My TikTok Account Manager</title>
+<style>
+  :root {
+    --bg: #0f0f14;
+    --card: #1a1a24;
+    --card2: #22222e;
+    --text: #f5f5f7;
+    --muted: #9a9aa8;
+    --accent: #fe2c55;
+    --accent2: #25f4ee;
+    --ok: #2ecc71;
+    --warn: #f1c40f;
+    --err: #ff5c5c;
+    --border: #2e2e3c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 28px 24px 18px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(254,44,85,.12), rgba(37,244,238,.10));
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: .3px; }
+  header h1 .tt { color: var(--accent); }
+  header p { color: var(--muted); margin-top: 6px; font-size: 14px; }
+  main { flex: 1; width: 100%; max-width: 720px; margin: 0 auto; padding: 24px 20px 40px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 17px; margin-bottom: 14px; font-weight: 600; }
+  .status-line {
+    font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-bottom: 14px;
+    word-break: break-word;
+    min-height: 20px;
+  }
+  .status-line.ok { color: var(--ok); border-color: rgba(46,204,113,.4); }
+  .status-line.err { color: var(--err); border-color: rgba(255,92,92,.4); }
+  .status-line.warn { color: var(--warn); border-color: rgba(241,196,15,.4); }
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 26px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(90deg, var(--accent), #ff5c7a);
+    color: #fff;
+    transition: transform .08s ease, opacity .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn.secondary {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    padding: 9px 16px;
+  }
+  .btn.big { font-size: 17px; padding: 16px 34px; }
+  .login-wrap { text-align: center; padding: 34px 0 10px; }
+  .login-wrap .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  .logged-in {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logged-in img { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--accent2); }
+  .logged-in .who { font-size: 15px; }
+  .logged-in .who .name { font-weight: 700; font-size: 16px; }
+  .logged-in .who .oid { color: var(--muted); font-size: 12.5px; margin-top: 3px; word-break: break-all; }
+  input[type=text] {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: var(--accent2); }
+  .post-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 14px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .4px;
+  }
+  .badge.processing { background: rgba(241,196,15,.15); color: var(--warn); border: 1px solid rgba(241,196,15,.4); }
+  .badge.complete { background: rgba(46,204,113,.15); color: var(--ok); border: 1px solid rgba(46,204,113,.4); }
+  .badge.failed { background: rgba(255,92,92,.15); color: var(--err); border: 1px solid rgba(255,92,92,.4); }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(241,196,15,.3);
+    border-top-color: var(--warn);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .video-item {
+    display: flex;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: var(--card2);
+  }
+  .video-item img { width: 74px; height: 110px; object-fit: cover; border-radius: 8px; background: #000; flex-shrink: 0; }
+  .video-item .vtitle { font-size: 14px; font-weight: 600; margin-bottom: 8px; min-height: 18px; }
+  .stats { display: flex; gap: 14px; flex-wrap: wrap; }
+  .stat { font-size: 12.5px; color: var(--muted); }
+  .stat b { color: var(--text); font-size: 13.5px; }
+  .stat .ico { margin-right: 3px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  footer {
+    text-align: center;
+    padding: 18px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: underline; margin: 0 8px; }
+  footer a:hover { color: var(--text); }
+  .hidden { display: none !important; }
+  .postid { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); word-break: break-all; margin-top: 8px; }
+</style>
 </head>
 <body>
-  <h1>My TikTok Account Manager</h1>
-  <p>This is a private, personal tool used solely by its owner to manage their own TikTok account. It is not a public product and is not offered to third parties.</p>
-  <div class="card">
-    <h2>What it does</h2>
-    <ul>
-      <li>Posts videos to the owner's own TikTok account via the TikTok Content Posting API.</li>
-      <li>Retrieves basic public statistics for the owner's own videos via the TikTok Display API.</li>
-    </ul>
-    <h2>Links</h2>
-    <ul>
-      <li><a href="/tos.html">Terms of Service</a></li>
-      <li><a href="/privacy.html">Privacy Policy</a></li>
-    </ul>
+<header>
+  <h1>My <span class="tt">TikTok</span> Account Manager</h1>
+  <p>Sign in, post a video, and track your stats — powered by the official TikTok API</p>
+</header>
+<main>
+  <!-- AUTH CARD -->
+  <div class="card" id="authCard">
+    <div id="loginView" class="login-wrap">
+      <button class="btn big" id="loginBtn">Log in with TikTok</button>
+      <div class="hint">Uses the official TikTok Login Kit (OAuth 2.0). No password is ever seen by this app.</div>
+    </div>
+    <div id="meView" class="logged-in hidden">
+      <img id="meAvatar" alt="avatar" src="" onerror="this.style.display='none'">
+      <div class="who">
+        <div class="name" id="meName">Loading…</div>
+        <div class="oid" id="meOid"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- POST CARD -->
+  <div class="card hidden" id="postCard">
+    <h2>Post a video</h2>
+    <div class="status-line" id="postStatus">Ready. The sample video (720×1280, 6s) will be posted privately (SELF_ONLY).</div>
+    <input type="text" id="caption" maxlength="2200" value="Demo post from my personal TikTok API app">
+    <button class="btn" id="postBtn">Post sample video</button>
+    <div class="post-status hidden" id="postPoll">
+      <span class="spinner" id="pollSpinner"></span>
+      <span class="badge processing" id="pollBadge">PROCESSING</span>
+      <span id="pollText" style="color:var(--muted)"></span>
+    </div>
+    <div class="postid hidden" id="postId"></div>
+  </div>
+
+  <!-- VIDEOS CARD -->
+  <div class="card hidden" id="videosCard">
+    <div class="row" style="margin-bottom:14px">
+      <h2 style="margin:0">My videos</h2>
+      <button class="btn secondary" id="refreshBtn">Refresh</button>
+    </div>
+    <div class="status-line" id="videosStatus">Loading your videos…</div>
+    <div id="videosList"></div>
+  </div>
+</main>
+<footer>
+  <a href="/tos.html">Terms of Service</a>
+  <a href="/privacy.html">Privacy Policy</a>
+</footer>
+
+<script>
+const API = 'http://localhost:8321';
+const CLIENT_KEY = 'awgxh9xtw84hxvuk';
+const REDIRECT_URI = 'https://ninafontes321.github.io/callback.html';
+const SCOPES = 'user.info.basic video.publish video.list';
+
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function setStatus(el, msg, cls) {
+  el.textContent = msg;
+  el.className = 'status-line' + (cls ? ' ' + cls : '');
+}
+
+function authorizeUrl() {
+  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const p = new URLSearchParams({
+    client_key: CLIENT_KEY,
+    response_type: 'code',
+    scope: SCOPES,
+    redirect_uri: REDIRECT_URI,
+    state
+  });
+  return 'https://www.tiktok.com/v2/auth/authorize/?' + p.toString();
+}
+
+async function api(path, opts) {
+  const res = await fetch(API + path, opts);
+  return res.json();
+}
+
+let loggedIn = false;
+let pollTimer = null;
+
+async function loadMe() {
+  try {
+    const me = await api('/me');
+    if (me.ok) {
+      loggedIn = true;
+      $('loginView').classList.add('hidden');
+      $('meView').classList.remove('hidden');
+      $('postCard').classList.remove('hidden');
+      $('videosCard').classList.remove('hidden');
+      $('meName').textContent = 'Logged in as ' + (me.username || me.display_name || 'TikTok user');
+      $('meOid').textContent = 'open_id: ' + (me.open_id || '');
+      if (me.avatar_url) $('meAvatar').src = me.avatar_url;
+      if (me.api_error) setStatus($('postStatus'), 'Warning: ' + me.api_error, 'warn');
+      loadVideos();
+    } else {
+      loggedIn = false;
+      $('loginView').classList.remove('hidden');
+      $('meView').classList.add('hidden');
+      $('postCard').classList.add('hidden');
+      $('videosCard').classList.add('hidden');
+    }
+  } catch (e) {
+    setStatus($('postStatus'), 'Backend not reachable at ' + API + ' — start it with: node backend/server.js', 'err');
+  }
+}
+
+async function loadVideos() {
+  setStatus($('videosStatus'), 'Loading your videos…');
+  try {
+    const data = await api('/videos');
+    if (!data.ok) {
+      setStatus($('videosStatus'), 'Could not load videos: ' + (data.error || 'unknown error'), 'err');
+      return;
+    }
+    const list = data.videos || [];
+    if (!list.length) {
+      setStatus($('videosStatus'), 'No public videos yet. Private (SELF_ONLY) posts do not appear in the public list.', 'warn');
+      $('videosList').innerHTML = '';
+      return;
+    }
+    setStatus($('videosStatus'), list.length + ' video' + (list.length > 1 ? 's' : '') + ' found', 'ok');
+    $('videosList').innerHTML = list.map(v => `
+      <div class="video-item">
+        ${v.cover_image_url ? '<img src="' + v.cover_image_url + '" alt="cover" onerror="this.style.visibility=\'hidden\'">' : ''}
+        <div style="flex:1">
+          <div class="vtitle">${escapeHtml(v.title || '(no title)')}</div>
+          <div class="stats">
+            <span class="stat"><span class="ico">▶</span><b>${fmt(v.view_count)}</b> views</span>
+            <span class="stat"><span class="ico">♥</span><b>${fmt(v.like_count)}</b> likes</span>
+            <span class="stat"><span class="ico">💬</span><b>${fmt(v.comment_count)}</b> comments</span>
+            <span class="stat"><span class="ico">↗</span><b>${fmt(v.share_count)}</b> shares</span>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    setStatus($('videosStatus'), 'Request failed: ' + e.message, 'err');
+  }
+}
+
+function fmt(n) {
+  if (n === null || n === undefined) return '0';
+  return Number(n).toLocaleString();
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function doPost() {
+  const caption = $('caption').value.trim() || 'Demo post';
+  $('postBtn').disabled = true;
+  setStatus($('postStatus'), 'Contacting TikTok Content Posting API…');
+  try {
+    const r = await api('/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: caption })
+    });
+    if (!r.ok) {
+      setStatus($('postStatus'), 'Post failed: ' + (r.error || 'unknown error'), 'err');
+      $('postBtn').disabled = false;
+      return;
+    }
+    $('postId').textContent = 'publish_id: ' + r.publish_id + '  (via ' + r.method + ')';
+    $('postId').classList.remove('hidden');
+    setStatus($('postStatus'), 'Post accepted by TikTok. Polling status every 5s…', 'ok');
+    startPolling(r.publish_id);
+  } catch (e) {
+    setStatus($('postStatus'), 'Request failed: ' + e.message, 'err');
+    $('postBtn').disabled = false;
+  }
+}
+
+function startPolling(publishId) {
+  if (pollTimer) clearInterval(pollTimer);
+  $('postPoll').classList.remove('hidden');
+  const badge = $('pollBadge');
+  const text = $('pollText');
+  let tries = 0;
+  const tick = async () => {
+    tries++;
+    try {
+      const s = await api('/status?publish_id=' + encodeURIComponent(publishId));
+      if (!s.ok) {
+        text.textContent = 'status error: ' + (s.error || 'unknown');
+        return;
+      }
+      const st = s.status;
+      if (st === 'PUBLISH_COMPLETE') {
+        badge.textContent = 'PUBLISH_COMPLETE';
+        badge.className = 'badge complete';
+        $('pollSpinner').style.display = 'none';
+        text.textContent = 'Your video was published successfully!';
+        setStatus($('postStatus'), 'Success — the video is now posted to your account (private).', 'ok');
+        $('postBtn').disabled = false;
+        clearInterval(pollTimer);
+        loadVideos();
+      } else if (st === 'FAILED') {
+        badge.textContent = 'FAILED';
+        badge.className = 'badge failed';
+        $('pollSpinner').style.display = 'none';
+        text.textContent = 'fail_reason: ' + (s.fail_reason || 'unknown');
+        setStatus($('postStatus'), 'Publishing failed: ' + (s.fail_reason || 'unknown reason'), 'err');
+        $('postBtn').disabled = false;
+        clearInterval(pollTimer);
+      } else {
+        badge.textContent = st;
+        badge.className = 'badge processing';
+        text.textContent = 'TikTok is processing your video… (check #' + tries + ')';
+      }
+    } catch (e) {
+      text.textContent = 'poll error: ' + e.message;
+    }
+  };
+  tick();
+  pollTimer = setInterval(tick, 5000);
+}
+
+$('loginBtn').addEventListener('click', () => {
+  location.href = authorizeUrl();
+});
+$('postBtn').addEventListener('click', doPost);
+$('refreshBtn').addEventListener('click', loadVideos);
+
+loadMe();
+</script>
 </body>
 </html>
