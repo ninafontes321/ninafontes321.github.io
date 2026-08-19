@@ -231,6 +231,7 @@ function authorizeUrl() {
     response_type: 'code',
     scope: SCOPES,
     redirect_uri: REDIRECT_URI,
+    disable_auto_auth: '1',
     state
   });
   return 'https://www.tiktok.com/v2/auth/authorize/?' + p.toString();
