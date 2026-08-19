@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing you in… — My TikTok Account Manager</title>
+<style>
+  :root { --bg:#0f0f14; --card:#1a1a24; --text:#f5f5f7; --muted:#9a9aa8; --accent:#fe2c55; --ok:#2ecc71; --err:#ff5c5c; --border:#2e2e3c; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 34px 30px; max-width: 480px; width: calc(100% - 40px); text-align: center;
+  }
+  h1 { font-size: 19px; margin-bottom: 12px; }
+  h1 .tt { color: var(--accent); }
+  p { color: var(--muted); font-size: 14px; line-height: 1.5; word-break: break-word; }
+  .spinner {
+    width: 34px; height: 34px; margin: 18px auto 6px;
+    border: 3px solid rgba(254,44,85,.25); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ok { color: var(--ok); font-weight: 600; }
+  .err { color: var(--err); }
+  .detail {
+    margin-top: 14px; text-align: left; background: #12121a; border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+    white-space: pre-wrap; word-break: break-all; color: var(--muted);
+  }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>My <span class="tt">TikTok</span> Account Manager</h1>
+  <div class="spinner" id="spin"></div>
+  <p id="msg">Completing sign-in with TikTok…</p>
+  <div class="detail hidden" id="detail" style="display:none"></div>
+  <p id="fallback" style="margin-top:16px" class="hidden" >
+    If this page does not proceed automatically, go back to <a href="/">the app</a>.
+  </p>
+</div>
+<script>
+const API = 'http://localhost:8321';
+const $ = id => document.getElementById(id);
+
+const params = new URLSearchParams(location.search);
+const code = params.get('code');
+const errParam = params.get('error');
+const errDesc = params.get('error_description');
+
+function showDetail(s) {
+  const d = $('detail');
+  d.textContent = s;
+  d.style.display = 'block';
+}
+
+(async () => {
+  if (errParam) {
+    $('spin').style.display = 'none';
+    $('msg').className = 'err';
+    $('msg').textContent = 'TikTok returned an error: ' + errParam + (errDesc ? ' — ' + errDesc : '');
+    showDetail('error=' + errParam + '\nerror_description=' + (errDesc || ''));
+    $('fallback').classList.remove('hidden');
+    return;
+  }
+  if (!code) {
+    $('spin').style.display = 'none';
+    $('msg').className = 'err';
+    $('msg').textContent = 'No authorization code received from TikTok.';
+    showDetail('URL: ' + location.href);
+    $('fallback').classList.remove('hidden');
+    return;
+  }
+
+  try {
+    const res = await fetch(API + '/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      $('spin').style.display = 'none';
+      $('msg').className = 'ok';
+      $('msg').textContent = 'Signed in successfully! Redirecting…';
+      setTimeout(() => location.replace('/?auth=ok'), 700);
+    } else {
+      $('spin').style.display = 'none';
+      $('msg').className = 'err';
+      $('msg').textContent = 'Sign-in failed: ' + (data.error || 'unknown error');
+      showDetail(JSON.stringify(data.detail || data, null, 2));
+      $('fallback').classList.remove('hidden');
+    }
+  } catch (e) {
+    $('spin').style.display = 'none';
+    $('msg').className = 'err';
+    $('msg').textContent = 'Could not reach the local backend at ' + API;
+    showDetail(String(e));
+    $('fallback').classList.remove('hidden');
+  }
+})();
+</script>
+</body>
+</html>
