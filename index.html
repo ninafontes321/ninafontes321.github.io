@@ -163,7 +163,7 @@
 <body>
 <header>
   <h1>My <span class="tt">TikTok</span> Account Manager</h1>
-  <p>Sign in and publish a video — powered by the official TikTok API</p>
+  <p>Sign in and upload a video to your TikTok inbox — powered by the official TikTok API</p>
 </header>
 <main>
   <!-- AUTH CARD -->
@@ -184,9 +184,9 @@
   <!-- POST CARD -->
   <div class="card hidden" id="postCard">
     <h2>Post a video</h2>
-    <div class="status-line" id="postStatus">Ready. The sample video (720×1280, 6s) will be posted privately (SELF_ONLY).</div>
+    <div class="status-line" id="postStatus">Ready. The sample video (720×1280, 6s) will be uploaded to your TikTok inbox for review.</div>
     <input type="text" id="caption" maxlength="2200" value="Demo post from my personal TikTok API app">
-    <button class="btn" id="postBtn">Post sample video</button>
+    <button class="btn" id="postBtn">Upload to TikTok inbox</button>
     <div class="post-status hidden" id="postPoll">
       <span class="spinner" id="pollSpinner"></span>
       <span class="badge processing" id="pollBadge">PROCESSING</span>
@@ -214,7 +214,7 @@
 const API = 'http://localhost:8321';
 const CLIENT_KEY = 'sbawyce2w7me2v43xc';
 const REDIRECT_URI = 'https://ninafontes321.github.io/callback.html';
-const SCOPES = 'user.info.basic video.publish';
+const SCOPES = 'user.info.basic video.upload';
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -326,7 +326,7 @@ async function doPost() {
     }
     $('postId').textContent = 'publish_id: ' + r.publish_id + '  (via ' + r.method + ')';
     $('postId').classList.remove('hidden');
-    setStatus($('postStatus'), 'Post accepted by TikTok. Polling status every 5s…', 'ok');
+     setStatus($('postStatus'), 'Upload accepted by TikTok. Polling status every 5s…', 'ok');
     startPolling(r.publish_id);
   } catch (e) {
     setStatus($('postStatus'), 'Request failed: ' + e.message, 'err');
@@ -349,15 +349,16 @@ function startPolling(publishId) {
         return;
       }
       const st = s.status;
-      if (st === 'PUBLISH_COMPLETE') {
-        badge.textContent = 'PUBLISH_COMPLETE';
-        badge.className = 'badge complete';
-        $('pollSpinner').style.display = 'none';
-        text.textContent = 'Your video was published successfully!';
-        setStatus($('postStatus'), 'Success — the video is now posted to your account (private).', 'ok');
-        $('postBtn').disabled = false;
-        clearInterval(pollTimer);
-        loadVideos();
+       if (st === 'SEND_TO_USER_INBOX' || st === 'PUBLISH_COMPLETE') {
+         badge.textContent = st;
+         badge.className = 'badge complete';
+         $('pollSpinner').style.display = 'none';
+         text.textContent = st === 'SEND_TO_USER_INBOX'
+           ? 'Your video is ready in the TikTok inbox for review.'
+           : 'Your video was published successfully!';
+         setStatus($('postStatus'), 'Success — the video was uploaded to your TikTok inbox.', 'ok');
+         $('postBtn').disabled = false;
+         clearInterval(pollTimer);
       } else if (st === 'FAILED') {
         badge.textContent = 'FAILED';
         badge.className = 'badge failed';
