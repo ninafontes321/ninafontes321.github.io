@@ -215,6 +215,7 @@ const API = 'http://127.0.0.1:8321';
 const CLIENT_KEY = 'sbawyce2w7me2v43xc';
 const REDIRECT_URI = 'https://ninafontes321.github.io/callback.html';
 const SCOPES = 'user.info.basic,video.upload';
+const OAUTH_STATE_KEY = 'tiktok_oauth_state';
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -225,7 +226,8 @@ function setStatus(el, msg, cls) {
 }
 
 function authorizeUrl() {
-  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const state = crypto.randomUUID();
+  sessionStorage.setItem(OAUTH_STATE_KEY, state);
   const p = new URLSearchParams({
     client_key: CLIENT_KEY,
     response_type: 'code',
