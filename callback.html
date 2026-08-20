@@ -51,8 +51,10 @@ const $ = id => document.getElementById(id);
 
 const params = new URLSearchParams(location.search);
 const code = params.get('code');
+const returnedState = params.get('state');
 const errParam = params.get('error');
 const errDesc = params.get('error_description');
+const expectedState = sessionStorage.getItem('tiktok_oauth_state');
 
 function showDetail(s) {
   const d = $('detail');
@@ -61,6 +63,17 @@ function showDetail(s) {
 }
 
 (async () => {
+  if (!expectedState || !returnedState || returnedState !== expectedState) {
+    sessionStorage.removeItem('tiktok_oauth_state');
+    $('spin').style.display = 'none';
+    $('msg').className = 'err';
+    $('msg').textContent = 'Sign-in request expired or was not initiated by this app.';
+    showDetail('OAuth state validation failed. Start sign-in again from the app.');
+    $('fallback').classList.remove('hidden');
+    return;
+  }
+  sessionStorage.removeItem('tiktok_oauth_state');
+
   if (errParam) {
     $('spin').style.display = 'none';
     $('msg').className = 'err';
